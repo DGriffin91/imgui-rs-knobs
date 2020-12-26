@@ -107,6 +107,7 @@ pub fn knob_control(
 
     if ui.is_mouse_double_clicked(MouseButton::Left) && is_active {
         *p_value = v_default;
+        value_changed = true;
     } else if is_active && delta[1] != 0.0 {
         let step = (v_max - v_min) / 200.0;
         *p_value -= delta[1] * step;
