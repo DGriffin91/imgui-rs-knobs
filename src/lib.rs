@@ -105,11 +105,21 @@ pub fn knob_control(
     let is_active = ui.is_item_active();
     let delta = ui.mouse_drag_delta_with_threshold(MouseButton::Left, 0.0001);
 
+    let io = ui.io();
+    io.key_shift;
+
+    //Maybe this should be configurable
+    let speed = if io.key_shift || io.key_alt {
+        2000.0
+    } else {
+        200.0
+    };
+
     if ui.is_mouse_double_clicked(MouseButton::Left) && is_active {
         *p_value = v_default;
         value_changed = true;
     } else if is_active && delta[1] != 0.0 {
-        let step = (v_max - v_min) / 200.0;
+        let step = (v_max - v_min) / speed;
         *p_value -= delta[1] * step;
         if *p_value < v_min {
             *p_value = v_min;
