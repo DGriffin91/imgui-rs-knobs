@@ -193,13 +193,17 @@ impl<'a> Knob<'a> {
         v_max: f32,
         v_default: f32,
         radius: f32,
+        controllable: bool,
     ) -> Knob<'a> {
         let angle_min = PI * 0.75;
         let angle_max = PI * 2.25;
         let t = (*p_value - v_min) / (v_max - v_min);
         let angle = angle_min + (angle_max - angle_min) * t;
         let screen_pos = ui.cursor_screen_pos();
-        let value_changed = knob_control(ui, label, p_value, v_min, v_max, v_default, radius);
+        let mut value_changed = false;
+        if controllable {
+            value_changed = knob_control(ui, label, p_value, v_min, v_max, v_default, radius);
+        }
         Knob {
             ui,
             label,
@@ -476,7 +480,7 @@ pub fn knob_with_drag<'a>(
 
     knob_title(ui, title, width);
 
-    let knob = Knob::new(ui, id, p_value, v_min, v_max, v_default, width * 0.5);
+    let knob = Knob::new(ui, id, p_value, v_min, v_max, v_default, width * 0.5, true);
 
     Drag::new(&ImString::new(format!(
         "###{}_KNOB_DRAG_CONTORL_",
