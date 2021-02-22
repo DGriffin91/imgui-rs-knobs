@@ -19,7 +19,7 @@ pub fn bezier_arc(center: [f32; 2], start: [f32; 2], end: [f32; 2]) -> ([f32; 2]
 }
 
 pub fn draw_arc1(
-    draw_list: &WindowDrawList,
+    draw_list: &DrawListMut,
     center: [f32; 2],
     radius: f32,
     start_angle: f32,
@@ -48,7 +48,7 @@ pub fn draw_arc1(
 }
 
 pub fn draw_arc(
-    draw_list: &WindowDrawList,
+    draw_list: &DrawListMut,
     center: [f32; 2],
     radius: f32,
     start_angle: f32,
@@ -173,7 +173,7 @@ pub struct Knob<'a> {
     pub screen_pos: [f32; 2],
     pub value_changed: bool,
     pub center: [f32; 2],
-    pub draw_list: WindowDrawList<'a>,
+    pub draw_list: DrawListMut<'a>,
     pub is_active: bool,
     pub is_hovered: bool,
     pub angle_min: f32,
