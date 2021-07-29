@@ -1,4 +1,3 @@
-//TODO stepped increments
 //TODO make something similar to drag control but with single click (doesn't need to support drag)
 
 use imgui::*;
@@ -93,10 +92,9 @@ pub fn knob_control(
     ui: &Ui,
     id: &ImStr,
     p_value: &mut f32,
-    v_min: f32,
-    v_max: f32,
     v_default: f32,
     radius: f32,
+    speed: f32,
 ) -> bool {
     ui.invisible_button(id, [radius * 2.0, radius * 2.0]);
 
@@ -106,26 +104,26 @@ pub fn knob_control(
     let delta = ui.mouse_drag_delta_with_threshold(MouseButton::Left, 0.0001);
 
     let io = ui.io();
-    io.key_shift;
+    // io.key_shift;
 
     //Maybe this should be configurable
     let speed = if io.key_shift || io.key_alt {
-        2000.0
+        speed * 10.
     } else {
-        200.0
+        speed
     };
 
     if ui.is_mouse_double_clicked(MouseButton::Left) && is_active {
         *p_value = v_default;
         value_changed = true;
     } else if is_active && delta[1] != 0.0 {
-        let step = (v_max - v_min) / speed;
+        let step = 1. / speed;
         *p_value -= delta[1] * step;
-        if *p_value < v_min {
-            *p_value = v_min;
+        if *p_value < 0. {
+            *p_value = 0.;
         }
-        if *p_value > v_max {
-            *p_value = v_max;
+        if *p_value > 1. {
+            *p_value = 1.;
         }
         value_changed = true;
 
@@ -166,8 +164,8 @@ pub struct Knob<'a> {
     pub ui: &'a Ui<'a>,
     pub label: &'a ImStr,
     pub p_value: &'a mut f32,
-    pub v_min: f32,
-    pub v_max: f32,
+    // pub v_min: f32,
+    // pub v_max: f32,
     pub v_default: f32,
     pub radius: f32,
     pub screen_pos: [f32; 2],
@@ -189,27 +187,25 @@ impl<'a> Knob<'a> {
         ui: &'a Ui,
         label: &'a ImStr,
         p_value: &'a mut f32,
-        v_min: f32,
-        v_max: f32,
         v_default: f32,
         radius: f32,
         controllable: bool,
     ) -> Knob<'a> {
+
         let angle_min = PI * 0.75;
         let angle_max = PI * 2.25;
-        let t = (*p_value - v_min) / (v_max - v_min);
+        let t = *p_value;
+
         let angle = angle_min + (angle_max - angle_min) * t;
         let screen_pos = ui.cursor_screen_pos();
         let mut value_changed = false;
         if controllable {
-            value_changed = knob_control(ui, label, p_value, v_min, v_max, v_default, radius);
+            value_changed = knob_control(ui, label, p_value, v_default, radius, 200.);
         }
         Knob {
             ui,
             label,
             p_value,
-            v_min,
-            v_max,
             v_default,
             radius,
             screen_pos,
@@ -224,6 +220,7 @@ impl<'a> Knob<'a> {
             angle,
             angle_cos: angle.cos(),
             angle_sin: angle.sin(),
+
         }
     }
 
@@ -444,13 +441,16 @@ pub fn draw_stepped_knob(
     dot_color: &ColorSet,
     step_color: &ColorSet,
 ) {
-    for n in 0..steps {
+    for n in 0..steps as usize {
         let a = n as f32 / (steps - 1) as f32;
         let angle = knob.angle_min + (knob.angle_max - knob.angle_min) * a;
         knob.draw_tick(0.7, 0.9, 0.04, angle, step_color);
     }
+    // making the knob snap to the steps
+    let rounded_angle = knob.angle_min + (knob.angle_max - knob.angle_min) * (knob.t * (steps - 1) as f32).floor() / (steps - 1) as f32;
+
     knob.draw_circle(0.6, circle_color, true, 32);
-    knob.draw_dot(0.12, 0.4, knob.angle, dot_color, true, 12);
+    knob.draw_dot(0.12, 0.4, rounded_angle, dot_color, true, 12);
 }
 
 pub fn knob_title(ui: &Ui, label: &ImStr, width: f32) {
@@ -470,8 +470,6 @@ pub fn knob_with_drag<'a>(
     id: &'a ImStr,
     title: &ImStr,
     p_value: &'a mut f32,
-    v_min: f32,
-    v_max: f32,
     v_default: f32,
     format: &ImStr,
 ) -> Knob<'a> {
@@ -480,15 +478,15 @@ pub fn knob_with_drag<'a>(
 
     knob_title(ui, title, width);
 
-    let knob = Knob::new(ui, id, p_value, v_min, v_max, v_default, width * 0.5, true);
+    let knob = Knob::new(ui, id, p_value, v_default, width * 0.5, true);
 
     Drag::new(&ImString::new(format!(
         "###{}_KNOB_DRAG_CONTORL_",
         id.to_str()
     )))
-    .range(v_min..=v_max)
+    .range(0f32..=1f32)
     .display_format(format)
-    .speed((v_max - v_min) / 1000.0)
+    .speed((1. - 0.) / 1000.0)
     .build(ui, knob.p_value);
 
     w.pop(ui);
